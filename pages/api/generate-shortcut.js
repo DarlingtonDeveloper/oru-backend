@@ -1,28 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-
-// Binary-safe buffer replacement that preserves byte length
-function bufferReplaceFixed(buffer, search, replace) {
-    const searchBuffer = Buffer.from(search, 'utf8');
-
-    // Match length exactly
-    let paddedReplace = replace;
-    if (replace.length < search.length) {
-        paddedReplace = replace + ' '.repeat(search.length - replace.length);
-    } else if (replace.length > search.length) {
-        paddedReplace = replace.substring(0, search.length);
-    }
-
-    const replaceBuffer = Buffer.from(paddedReplace, 'utf8');
-
-    const idx = buffer.indexOf(searchBuffer);
-    if (idx === -1) return buffer;
-
-    const before = buffer.subarray(0, idx);
-    const after = buffer.subarray(idx + searchBuffer.length);
-
-    return Buffer.concat([before, replaceBuffer, after]);
-}
+import bplistParser from 'bplist-parser';
+import bplistCreator from 'bplist-creator';
 
 export default async function handler(req, res) {
     const { uuid, app_name = 'Instagram', delay = 180 } = req.query;
@@ -33,16 +12,35 @@ export default async function handler(req, res) {
 
     try {
         const filePath = path.resolve('./data/Oru.shortcut');
-        let buffer = fs.readFileSync(filePath); // raw binary
+        const buffer = fs.readFileSync(filePath);
 
-        // Binary-safe replacements with fixed length
-        buffer = bufferReplaceFixed(buffer, 'F8C190-ABC0-4086-B119-D9484D7AD984', uuid);
-        buffer = bufferReplaceFixed(buffer, '{{APP_NAME}}', app_name);
-        buffer = bufferReplaceFixed(buffer, '{{DELAY}}', delay.toString());
+        // Parse plist (returns an array of objects)
+        const [parsed] = bplistParser.parseBuffer(buffer);
 
+        // Traverse and patch the parsed structure
+        const json = JSON.parse(JSON.stringify(parsed)); // clone
+
+        // ⛏ inject your values here based on placeholder markers
+        // Example (you'll adjust based on real structure):
+        const replaceInObject = (obj) => {
+            for (let key in obj) {
+                if (typeof obj[key] === 'string') {
+                    if (obj[key].includes('F8C190')) obj[key] = uuid;
+                    if (obj[key].includes('{{APP_NAME}}')) obj[key] = app_name;
+                    if (obj[key].includes('{{DELAY}}')) obj[key] = delay.toString();
+                } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+                    replaceInObject(obj[key]);
+                }
+            }
+        };
+
+        replaceInObject(json);
+
+        // Re-encode
+        const newPlist = bplistCreator(json);
         res.setHeader('Content-Disposition', 'attachment; filename="oru.shortcut"');
         res.setHeader('Content-Type', 'application/octet-stream');
-        res.status(200).send(buffer);
+        res.status(200).send(Buffer.from(newPlist));
     } catch (err) {
         console.error('Error generating shortcut:', err);
         res.status(500).json({ error: 'Failed to generate shortcut' });
