@@ -1,6 +1,20 @@
 import fs from 'fs';
 import path from 'path';
 
+// Binary-safe buffer replacement
+function bufferReplace(buffer, search, replace) {
+    const searchBuffer = Buffer.from(search, 'utf8');
+    const replaceBuffer = Buffer.from(replace, 'utf8');
+
+    const idx = buffer.indexOf(searchBuffer);
+    if (idx === -1) return buffer;
+
+    const before = buffer.subarray(0, idx);
+    const after = buffer.subarray(idx + searchBuffer.length);
+
+    return Buffer.concat([before, replaceBuffer, after]);
+}
+
 export default async function handler(req, res) {
     const { uuid, app_name = 'Instagram', delay = 180 } = req.query;
 
@@ -10,21 +24,16 @@ export default async function handler(req, res) {
 
     try {
         const filePath = path.resolve('./data/Oru.shortcut');
-        const buffer = fs.readFileSync(filePath); // Binary buffer
+        let buffer = fs.readFileSync(filePath); // raw binary
 
         // Binary-safe replacements
-        let content = buffer.toString('latin1'); // Use latin1 to preserve binary structure
-
-        content = content
-            .replace(/F8C190-ABC0-4086-B119-D9484D7AD984/g, uuid)
-            .replace(/{{APP_NAME}}/g, app_name)
-            .replace(/{{DELAY}}/g, delay.toString());
-
-        const patchedBuffer = Buffer.from(content, 'latin1');
+        buffer = bufferReplace(buffer, 'F8C190-ABC0-4086-B119-D9484D7AD984', uuid);
+        buffer = bufferReplace(buffer, '{{APP_NAME}}', app_name);
+        buffer = bufferReplace(buffer, '{{DELAY}}', delay.toString());
 
         res.setHeader('Content-Disposition', 'attachment; filename="oru.shortcut"');
-        res.setHeader('Content-Type', 'application/octet-stream'); // <- binary stream
-        res.status(200).send(patchedBuffer);
+        res.setHeader('Content-Type', 'application/octet-stream'); // treat as binary
+        res.status(200).send(buffer);
     } catch (err) {
         console.error('Error generating shortcut:', err);
         res.status(500).json({ error: 'Failed to generate shortcut' });
