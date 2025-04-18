@@ -43,6 +43,6 @@ export default async function handler(req, res) {
         res.status(200).send(Buffer.from(newPlist));
     } catch (err) {
         console.error('Error generating shortcut:', err);
-        res.status(500).json({ error: 'Failed to generate shortcut' });
+        res.status(500).json({ error: err.message || 'Failed to generate shortcut' });
     }
 }
