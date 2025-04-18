@@ -21,6 +21,7 @@ export default async function handler(req, res) {
     if (error) {
         return res.status(500).json({ error: error.message });
     }
+    console.log('API HIT', req.method, req.body);
 
     return res.status(200).json({ success: true });
 }
