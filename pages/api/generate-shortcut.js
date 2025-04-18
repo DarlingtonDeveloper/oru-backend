@@ -1,10 +1,19 @@
 import fs from 'fs';
 import path from 'path';
 
-// Binary-safe buffer replacement
-function bufferReplace(buffer, search, replace) {
+// Binary-safe buffer replacement that preserves byte length
+function bufferReplaceFixed(buffer, search, replace) {
     const searchBuffer = Buffer.from(search, 'utf8');
-    const replaceBuffer = Buffer.from(replace, 'utf8');
+
+    // Match length exactly
+    let paddedReplace = replace;
+    if (replace.length < search.length) {
+        paddedReplace = replace + ' '.repeat(search.length - replace.length);
+    } else if (replace.length > search.length) {
+        paddedReplace = replace.substring(0, search.length);
+    }
+
+    const replaceBuffer = Buffer.from(paddedReplace, 'utf8');
 
     const idx = buffer.indexOf(searchBuffer);
     if (idx === -1) return buffer;
@@ -26,13 +35,13 @@ export default async function handler(req, res) {
         const filePath = path.resolve('./data/Oru.shortcut');
         let buffer = fs.readFileSync(filePath); // raw binary
 
-        // Binary-safe replacements
-        buffer = bufferReplace(buffer, 'F8C190-ABC0-4086-B119-D9484D7AD984', uuid);
-        buffer = bufferReplace(buffer, '{{APP_NAME}}', app_name);
-        buffer = bufferReplace(buffer, '{{DELAY}}', delay.toString());
+        // Binary-safe replacements with fixed length
+        buffer = bufferReplaceFixed(buffer, 'F8C190-ABC0-4086-B119-D9484D7AD984', uuid);
+        buffer = bufferReplaceFixed(buffer, '{{APP_NAME}}', app_name);
+        buffer = bufferReplaceFixed(buffer, '{{DELAY}}', delay.toString());
 
         res.setHeader('Content-Disposition', 'attachment; filename="oru.shortcut"');
-        res.setHeader('Content-Type', 'application/octet-stream'); // treat as binary
+        res.setHeader('Content-Type', 'application/octet-stream');
         res.status(200).send(buffer);
     } catch (err) {
         console.error('Error generating shortcut:', err);
