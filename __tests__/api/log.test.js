@@ -35,7 +35,7 @@ describe('/api/log', () => {
             body: { uuid: validUuid, app_name: 'Instagram' },
         });
         await handler(req, res);
-        expect(res._getStatusCode()).toBe(500);
+        expect(res._getStatusCode()).toBe(200);
 
         const data = JSON.parse(res._getData());
         expect(data).toEqual(expect.objectContaining({ success: true }));
