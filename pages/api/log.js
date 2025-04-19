@@ -7,7 +7,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { uuid, app_name, timestamp } = req.body;
+    const { uuid, app_name } = req.body;
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuid || !app_name || !uuidRegex.test(uuid)) {
@@ -17,13 +17,12 @@ export default async function handler(req, res) {
     const { error } = await supabase.from('doomscroll_logs').insert({
         user_uuid: uuid,
         app_name,
-        triggered_at: timestamp || new Date().toISOString(),
+        triggered_at: new Date().toISOString(),
     });
 
     if (error) {
         return res.status(500).json({ error: error.message });
     }
-    console.log('API HIT', req.method, req.body);
 
     return res.status(200).json({ success: true });
 }

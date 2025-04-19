@@ -74,12 +74,6 @@ export default function OnboardPage() {
             >
                 Generate Shortcut
             </button>
-            <a
-                href={`shortcuts://import-shortcut?url=https://oru-backend-zeta.vercel.app/api/generate-delay-shortcut?delay=10`}
-                className="bg-black text-white p-3 rounded"
-            >
-                Add 5-Min Shortcut
-            </a>
         </main>
     );
 }

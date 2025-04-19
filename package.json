@@ -16,7 +16,9 @@
     "bplist-parser": "^0.3.2",
     "next": "15.3.1",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.3",
+    "swr": "^2.3.3"
   },
   "devDependencies": {
     "@babel/core": "^7.26.10",
