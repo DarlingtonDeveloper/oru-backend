@@ -1,0 +1,14 @@
+// This middleware is disabled to prevent redirect loops
+// Rename to middleware.js when needed
+
+import { NextResponse } from 'next/server';
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs';
+
+export async function middleware(request) {
+    // Just pass through all requests without any redirection
+    return NextResponse.next();
+}
+
+export const config = {
+    matcher: [],
+};
