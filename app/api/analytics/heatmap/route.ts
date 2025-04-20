@@ -1,14 +1,14 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { supabase } from '@/lib/supabase';
 import { cookies } from "next/headers";
-
-const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 
 export async function GET() {
   try {
-    // Get the authenticated user from Supabase Auth
+    // Initialize auth client with cookies
     const authClient = createServerComponentClient({ cookies });
+
+    // Get user session
     const { data: { session } } = await authClient.auth.getSession();
 
     // Return empty data if no user is authenticated
